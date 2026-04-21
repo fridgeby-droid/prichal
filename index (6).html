@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Заявки поставщикам</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 16px;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+
+        body[data-theme="blue"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+        body[data-theme="green"] {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        body[data-theme="purple"] {
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
+        }
+        body[data-theme="light"] {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        body[data-theme="light"] .header h1,
+        body[data-theme="light"] .header p,
+        body[data-theme="light"] .user-chip,
+        body[data-theme="light"] .card-title,
+        body[data-theme="light"] .product-name,
+        body[data-theme="light"] .order-shop,
+        body[data-theme="light"] .order-supplier,
+        body[data-theme="light"] .order-date,
+        body[data-theme="light"] .order-comment,
+        body[data-theme="light"] .order-product,
+        body[data-theme="light"] .filter-modal-btn,
+        body[data-theme="light"] .tab,
+        body[data-theme="light"] .admin-nav-btn,
+        body[data-theme="light"] .list-item,
+        body[data-theme="light"] h3,
+        body[data-theme="light"] h4,
+        body[data-theme="light"] .empty-state {
+            color: #1a1a2e;
+        }
+        body[data-theme="light"] .card,
+        body[data-theme="light"] .order-item,
+        body[data-theme="light"] .filters-modal-content,
+        body[data-theme="light"] .modal-content {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        body[data-theme="light"] .ios-select,
+        body[data-theme="light"] .ios-textarea,
+        body[data-theme="light"] .ios-input,
+        body[data-theme="light"] .quantity-input,
+        body[data-theme="light"] .filter-modal-select,
+        body[data-theme="light"] .custom-date-input {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1a1a2e;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        body[data-theme="light"] .ios-select option {
+            background: white;
+            color: #1a1a2e;
+        }
+
+        .theme-selector {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .theme-btn:hover { transform: scale(1.1); }
+        .theme-blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .theme-green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .theme-purple { background: linear-gradient(135deg, #a8c0ff, #3f2b96); }
+        .theme-light { background: linear-gradient(135deg, #f5f7fa, #c3cfe2); }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            margin: -16px -16px 20px -16px;
+            padding: 24px 20px 20px;
+            border-radius: 0 0 32px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .user-chip {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: white;
+            margin-top: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 6px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 18px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 14px;
+            color: white;
+        }
+
+        .ios-select {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            font-size: 15px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .ios-select option {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+
+        .ios-textarea, .ios-input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            color: white;
+        }
+
+        .ios-textarea::placeholder, .ios-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .product-category {
+            margin-bottom: 16px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .category-header span {
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+        }
+
+        .category-toggle {
+            font-size: 18px;
+        }
+
+        .category-items {
+            padding: 8px;
+        }
+
+        .product-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: white;
+        }
+
+        .product-unit {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-left: 6px;
+        }
+
+        .quantity-input {
+            width: 80px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+
+        .ios-button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .ios-button-primary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .ios-button-primary:active {
+            transform: scale(0.98);
+        }
+
+        .ios-button-primary:disabled {
+            opacity: 0.5;
+        }
+
+        .order-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .order-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .edit-order-btn {
+            background: rgba(0, 122, 255, 0.8);
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .delete-order-btn {
+            background: rgba(220, 53, 69, 0.8);
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-right: 100px;
+        }
+
+        .order-shop { font-weight: 600; font-size: 16px; color: white; }
+        .order-supplier { font-size: 12px; color: rgba(255, 255, 255, 0.8); margin-top: 4px; }
+        .order-date { font-size: 10px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .status-new { background: rgba(255, 193, 7, 0.8); color: #000; }
+        .status-completed { background: rgba(40, 167, 69, 0.8); color: #fff; }
+        .status-cancelled { background: rgba(220, 53, 69, 0.8); color: #fff; }
+
+        .order-comment {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 14px;
+            margin: 10px 0;
+            font-size: 12px;
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .order-product {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .filter-modal-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .active-filters-preview {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .filters-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .filters-modal-content {
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 28px 28px 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .filters-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .filters-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: white;
+        }
+
+        .close-filters-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .filters-modal-body {
+            padding: 20px;
+        }
+
+        .filter-section {
+            margin-bottom: 24px;
+        }
+
+        .filter-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn-modal, .filter-date-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            font-size: 13px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .filter-btn-modal.active, .filter-date-btn.active {
+            background: rgba(0, 122, 255, 0.8);
+            color: white;
+        }
+
+        .filter-modal-select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .date-range {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .date-range input {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            font-size: 13px;
+            color: white;
+        }
+
+        .filters-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .reset-filters-btn, .apply-filters-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .reset-filters-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .apply-filters-btn {
+            background: rgba(0, 122, 255, 0.9);
+            color: white;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 16px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-card {
+            height: 120px;
+            margin-bottom: 12px;
+        }
+        .skeleton-line {
+            height: 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+        .skeleton-title {
+            width: 60%;
+            height: 20px;
+            margin-bottom: 12px;
+        }
+
+        .edit-form {
+            margin-top: 12px;
+        }
+        .edit-form input, .edit-form textarea, .edit-form select {
+            margin-bottom: 8px;
+        }
+
+        .attachment-item {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 4px 12px;
+            margin: 4px;
+            font-size: 12px;
+        }
+        .attachment-item a {
+            color: white;
+            text-decoration: none;
+        }
+        .file-input-label {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .header { margin: -12px -12px 16px -12px; padding: 20px 16px 16px; }
+            .header h1 { font-size: 24px; }
+            .card { padding: 14px; }
+            .order-header { padding-right: 80px; }
+            .order-actions { top: 8px; right: 8px; }
+            .copy-btn { padding: 4px 8px; font-size: 12px; }
+            .tabs .tab { font-size: 11px; padding: 8px; }
+            .theme-selector { bottom: 10px; right: 10px; }
+            .theme-btn { width: 28px; height: 28px; }
+        }
+
+        .schedule-table-container {
+            overflow-x: auto;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            min-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 12px;
+            color: white;
+        }
+
+        .schedule-table th {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .schedule-table td:first-child,
+        .schedule-table th:first-child {
+            position: sticky;
+            left: 0;
+            background: rgba(0, 0, 0, 0.3);
+            text-align: left;
+            min-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .day-available {
+            color: #4cd964;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .day-unavailable {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        .admin-sidebar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-nav-btn {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .admin-nav-btn.active {
+            background: rgba(255, 255, 255, 0.35);
+            color: white;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            margin-bottom: 8px;
+            color: white;
+            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .delete-btn {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .day-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .day-btn {
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .day-btn.selected {
+            background: rgba(0, 122, 255, 0.8);
+            color: white;
+        }
+
+        .row-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .row-buttons input { flex: 2; }
+        .row-buttons button { flex: 1; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 24px;
+            max-width: 280px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .modal-btn-cancel {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .modal-btn-confirm, .modal-btn-ok {
+            background: rgba(255, 255, 255, 0.35);
+            color: white;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .status-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .status-btn-completed { background: rgba(40, 167, 69, 0.8); color: white; }
+        .status-btn-cancelled { background: rgba(220, 53, 69, 0.8); color: white; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-text { font-size: 15px; margin-bottom: 8px; }
+        .loading { text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.7); }
+
+        .success-message, .error-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            max-width: 90%;
+            min-width: 200px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .success-message {
+            background: rgba(40, 167, 69, 0.95);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h3, h4 { color: white; margin-bottom: 12px; }
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; animation: fadeIn 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>📋 Заявки</h1>
+            <p>Управление заявками. Темп до 8.00. Остальные поставщики до 10.00</p>
+            <div class="user-chip" id="userInfo">Загрузка...</div>
+        </div>
+
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="new">➕ Новая</button>
+            <button class="tab" data-tab="orders">📋 Заявки</button>
+            <button class="tab" data-tab="schedule">📅 График</button>
+            <button class="tab admin-tab" data-tab="admin" style="display:none">🔧 Админ</button>
+        </div>
+
+        <div id="new-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-title">🏪 Выберите магазин</div>
+                <select id="shop-select" class="ios-select"><option value="">Загрузка...</option></select>
+            </div>
+            <div id="supplier-card" class="card" style="display: none;">
+                <div class="card-title">📦 Выберите поставщика</div>
+                <select id="supplier-select" class="ios-select" disabled><option value="">Сначала выберите магазин</option></select>
+            </div>
+            <div id="products-card" class="card" style="display: none;">
+                <div class="card-title">🛒 Товары (необязательно)</div>
+                <div id="products-list"></div>
+                <div class="card-title" style="margin-top: 16px;">📎 Прикрепить файлы</div>
+                <div>
+                    <label class="file-input-label">📷 Выбрать фото/файл
+                        <input type="file" id="file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" style="display: none;" multiple>
+                    </label>
+                    <div id="attachments-preview" style="margin-top: 8px;"></div>
+                </div>
+                <div class="card-title" style="margin-top: 16px;">💬 Комментарий</div>
+                <textarea id="order-comment" class="ios-textarea" rows="2" placeholder="Дополнительная информация..."></textarea>
+                <button id="create-btn" class="ios-button ios-button-primary" style="margin-top: 16px;" disabled>✅ Создать заявку</button>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; margin-top: 12px;">💡 Можно создать заявку без товаров, но с комментарием</div>
+            </div>
+            <div id="no-suppliers" class="empty-state" style="display: none;"><div class="empty-icon">📭</div><div class="empty-text">Сегодня нет доступных поставщиков</div></div>
+        </div>
+
+        <div id="orders-tab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <button id="open-filters-btn" class="filter-modal-btn">🔍 Фильтры <span id="active-filters-count" style="background: #007aff; border-radius: 12px; padding: 2px 6px; font-size: 10px; margin-left: 6px; display: none;">0</span></button>
+                <div id="active-filters-preview" class="active-filters-preview"></div>
+            </div>
+            <div id="orders-list"></div>
+            <div id="no-orders" class="empty-state" style="display: none;"><div class="empty-icon">📭</div><div class="empty-text">Нет заявок</div></div>
+        </div>
+
+        <div id="schedule-tab" class="tab-content">
+            <div class="card">
+                <div class="card-title">🏪 Выберите магазин</div>
+                <select id="schedule-shop-select" class="ios-select"><option value="">Загрузка...</option></select>
+            </div>
+            <div id="schedule-container" class="schedule-table-container"></div>
+            <div id="no-schedule" class="empty-state" style="display: none;"><div class="empty-icon">📅</div><div class="empty-text">Выберите магазин</div></div>
+        </div>
+
+        <div id="admin-tab" class="tab-content">
+            <div id="admin-message" style="display: none;"></div>
+            <div class="admin-sidebar">
+                <button class="admin-nav-btn active" data-admin-section="suppliers">📦 Поставщики</button>
+                <button class="admin-nav-btn" data-admin-section="products">➕ Товары</button>
+                <button class="admin-nav-btn" data-admin-section="shops">🏪 Магазины</button>
+                <button class="admin-nav-btn" data-admin-section="schedule">📅 Расписание</button>
+                <button class="admin-nav-btn" data-admin-section="orders">📋 Заявки</button>
+                <button class="admin-nav-btn" data-admin-section="admins">👥 Админы</button>
+            </div>
+            <div id="admin-suppliers" class="admin-section active">
+                <div class="card"><h3>📦 Управление поставщиками</h3><div class="row-buttons"><input type="text" id="new-supplier" class="ios-input" placeholder="Название поставщика"><button id="add-supplier-btn" class="ios-button ios-button-primary">➕ Добавить</button></div><div id="suppliers-list" style="margin-top: 16px;"></div></div>
+            </div>
+            <div id="admin-products" class="admin-section">
+                <div class="card"><h3>➕ Управление товарами</h3><select id="product-supplier-select" class="ios-select" style="margin-bottom: 12px;"><option value="">Выберите поставщика</option></select><div class="row-buttons"><input type="text" id="product-name" class="ios-input" placeholder="Название товара"><select id="product-unit" class="ios-select" style="width: auto;"><option value="шт">шт</option><option value="кг">кг</option><option value="кег">кег</option><option value="кейс">кейс</option><option value="бут">бут</option></select><button id="add-product-btn" class="ios-button ios-button-primary">➕</button></div><div id="products-admin-list" style="margin-top: 16px;"></div></div>
+            </div>
+            <div id="admin-shops" class="admin-section">
+                <div class="card"><h3>🏪 Управление магазинами</h3><div class="row-buttons"><input type="text" id="new-shop" class="ios-input" placeholder="Название магазина"><button id="add-shop-btn" class="ios-button ios-button-primary">➕ Добавить</button></div><div id="shops-list" style="margin-top: 16px;"></div></div>
+            </div>
+            <div id="admin-schedule" class="admin-section">
+                <div class="card">
+                    <h3>📅 Редактирование расписания</h3>
+                    <div class="row-buttons" style="margin-bottom: 12px;">
+                        <select id="schedule-shop" class="ios-select" style="flex:1;"><option value="">Магазин</option></select>
+                        <select id="schedule-supplier" class="ios-select" style="flex:1;"><option value="">Поставщик</option></select>
+                    </div>
+                    <div id="days-selector"></div>
+                    <button id="save-schedule-btn" class="ios-button ios-button-primary" style="margin-top: 16px;">💾 Сохранить расписание</button>
+                </div>
+            </div>
+            <div id="admin-orders" class="admin-section">
+                <div class="card">
+                    <h3>📋 Управление заявками</h3>
+                    <div style="margin-bottom: 12px;">
+                        <button id="refresh-orders-admin" class="ios-button ios-button-primary" style="width: auto; padding: 8px 16px;">🔄 Обновить список</button>
+                    </div>
+                    <div id="admin-orders-list" style="max-height: 500px; overflow-y: auto;"></div>
+                </div>
+            </div>
+            <div id="admin-admins" class="admin-section">
+                <div class="card"><h3>👥 Управление администраторами</h3><div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 16px; margin-bottom: 16px;"><div style="font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px;">ℹ️ Как добавить администратора:</div><div style="font-size: 12px; color: rgba(255,255,255,0.7);">1. Новый администратор пишет боту <code>/getid</code><br>2. Получает свой ID<br>3. Введите этот ID в поле ниже и нажмите "Добавить"</div></div><div class="row-buttons"><input type="number" id="new-admin-id" class="ios-input" placeholder="Telegram ID"><button id="add-admin-btn" class="ios-button ios-button-primary">➕ Добавить</button></div><div style="margin-top: 16px;"><h4 style="font-size: 14px; margin-bottom: 12px;">👥 Текущие администраторы:</h4><div id="admins-list" style="max-height: 300px; overflow-y: auto;"></div></div></div>
+            </div>
+        </div>
+
+        <div id="filters-modal" class="filters-modal">
+            <div class="filters-modal-content">
+                <div class="filters-modal-header">
+                    <h3>🔍 Фильтры</h3>
+                    <button id="close-filters-btn" class="close-filters-btn">✕</button>
+                </div>
+                <div class="filters-modal-body">
+                    <div class="filter-section">
+                        <div class="filter-section-title">📊 Статус</div>
+                        <div class="filter-buttons">
+                            <button class="filter-btn-modal active" data-status="all">Все</button>
+                            <button class="filter-btn-modal" data-status="new">Новые</button>
+                            <button class="filter-btn-modal" data-status="completed">Выполнены</button>
+                            <button class="filter-btn-modal" data-status="cancelled">Отменены</button>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-section-title">📅 Дата</div>
+                        <div class="filter-buttons">
+                            <button class="filter-date-btn active" data-date="all">Все даты</button>
+                            <button class="filter-date-btn" data-date="today">Сегодня</button>
+                            <button class="filter-date-btn" data-date="yesterday">Вчера</button>
+                            <button class="filter-date-btn" data-date="week">Эта неделя</button>
+                            <button class="filter-date-btn" data-date="custom">Выбрать диапазон</button>
+                        </div>
+                        <div id="date-range-container" style="margin-top: 8px; display: none;">
+                            <div class="date-range">
+                                <input type="date" id="date-from" placeholder="От">
+                                <input type="date" id="date-to" placeholder="До">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-section-title">🏪 Магазин</div>
+                        <select id="shop-filter-modal" class="filter-modal-select"><option value="all">Все магазины</option></select>
+                    </div>
+                    <div class="filter-section">
+                        <div class="filter-section-title">📦 Поставщик</div>
+                        <select id="supplier-filter-modal" class="filter-modal-select"><option value="all">Все поставщики</option></select>
+                    </div>
+                </div>
+                <div class="filters-modal-footer">
+                    <button id="reset-filters-btn" class="reset-filters-btn">Сбросить все</button>
+                    <button id="apply-filters-btn" class="apply-filters-btn">Применить</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal" class="modal"><div class="modal-content"><div class="modal-title" id="modal-title">Подтверждение</div><div class="modal-message" id="modal-message"></div><div class="modal-buttons" id="modal-buttons"></div></div></div>
+
+        <div class="theme-selector">
+            <div class="theme-btn theme-blue" data-theme="blue"></div>
+            <div class="theme-btn theme-green" data-theme="green"></div>
+            <div class="theme-btn theme-purple" data-theme="purple"></div>
+            <div class="theme-btn theme-light" data-theme="light"></div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+        if (user) document.getElementById('userInfo').innerHTML = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Пользователь';
+
+        const API_URL = 'https://prichal59.pythonanywhere.com/api';
+
+        let isAdminFlag = false;
+        let currentShop = null;
+        let currentSupplier = null;
+        let currentCart = {};
+        let currentStatusFilter = 'all';
+        let currentDateFilter = 'all';
+        let currentShopFilter = 'all';
+        let currentSupplierFilter = 'all';
+        let currentDateFrom = '';
+        let currentDateTo = '';
+        let attachmentsList = [];
+
+        let isCreatingOrder = false;
+        let isLoadingOrders = false;
+        let selectedDays = [];
+
+        const DAYS_OF_WEEK_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        const DAYS_OF_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('app_theme') || 'blue';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('app_theme', theme);
+        }
+        loadTheme();
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+        function showModal(title, message, buttons, callback) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalButtons = document.getElementById('modal-buttons');
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalButtons.innerHTML = '';
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.textContent = btn.text;
+                button.className = btn.isCancel ? 'modal-btn modal-btn-cancel' : 'modal-btn modal-btn-confirm';
+                if (btn.isOk) button.className = 'modal-btn modal-btn-ok';
+                button.onclick = () => { modal.style.display = 'none'; if (callback) callback(btn.id); };
+                modalButtons.appendChild(button);
+            });
+            modal.style.display = 'flex';
+        }
+
+        function showMessage(text, isError = false) {
+            const existingMsg = document.querySelector('.success-message, .error-message');
+            if (existingMsg) existingMsg.remove();
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = isError ? 'error-message' : 'success-message';
+            msgDiv.textContent = text;
+            document.body.appendChild(msgDiv);
+
+            setTimeout(() => {
+                msgDiv.style.animation = 'slideDown 0.3s ease reverse';
+                setTimeout(() => {
+                    if (msgDiv.parentNode) msgDiv.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        function showConfirm(title, message, onConfirm, onCancel) {
+            showModal(title, message, [{text: 'Отмена', id: 'cancel', isCancel: true}, {text: 'Подтвердить', id: 'confirm', isConfirm: true}], (buttonId) => {
+                if (buttonId === 'confirm' && onConfirm) onConfirm();
+                if (buttonId === 'cancel' && onCancel) onCancel();
+            });
+        }
+
+        function launchConfetti() {
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '10000';
+            document.body.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4'];
+
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 6 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    velocityX: (Math.random() - 0.5) * 8,
+                    velocityY: Math.random() * 10 + 5,
+                    gravity: 0.3,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            let animationId;
+            let startTime = Date.now();
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let allStopped = true;
+
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+
+                    p.x += p.velocityX;
+                    p.y += p.velocityY;
+                    p.velocityY += p.gravity;
+                    p.rotation += p.rotationSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+
+                    if (p.y < canvas.height + 100) {
+                        allStopped = false;
+                    }
+                }
+
+                if (!allStopped && Date.now() - startTime < 2000) {
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    cancelAnimationFrame(animationId);
+                    document.body.removeChild(canvas);
+                }
+            }
+
+            animate();
+        }
+
+        function showSkeletonOrders() {
+            const container = document.getElementById('orders-list');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton skeleton-card';
+                skeleton.innerHTML = `<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line" style="width: 80%;"></div>`;
+                container.appendChild(skeleton);
+            }
+        }
+
+        function copyOrderToClipboard(order) {
+            let text = `🏪 ${order.shop}\n📦 ${order.supplier}\n\n`;
+            if (order.comment && order.comment.trim()) text += `💬 ${order.comment}\n\n`;
+            text += `🛒 Товары:\n`;
+            if (Object.keys(order.items).length > 0) {
+                for (const [product, data] of Object.entries(order.items)) {
+                    const qty = data.quantity;
+                    const unit = data.unit || 'шт';
+                    const displayQty = Number.isInteger(qty) ? qty : qty.toFixed(1);
+                    text += `• ${product}: ${displayQty} ${unit}\n`;
+                }
+            } else {
+                text += `• Нет товаров (только комментарий)\n`;
+            }
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Заявка скопирована')).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showMessage('✅ Заявка скопирована');
+            });
+        }
+
+        async function editOrder(orderId) {
+            if (!isAdminFlag) return;
+            const allOrders = await fetch(`${API_URL}/get_orders`, { headers: { 'X-Telegram-InitData': tg.initData || '' } }).then(r => r.json());
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const shopsList = await fetch(`${API_URL}/get_shops`, { headers: { 'X-Telegram-InitData': tg.initData || '' } }).then(r => r.json());
+            const suppliersList = await fetch(`${API_URL}/get_suppliers`, { headers: { 'X-Telegram-InitData': tg.initData || '' } }).then(r => r.json());
+
+            const modalHtml = `
+                <div class="modal-content" style="max-width: 400px; width: 90%;">
+                    <div class="modal-title">✏️ Редактирование заявки #${orderId}</div>
+                    <div class="edit-form">
+                        <select id="edit-shop" class="ios-select" style="margin-bottom: 8px;">
+                            ${Object.keys(shopsList).map(s => `<option value="${s}" ${s === order.shop ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                        <select id="edit-supplier" class="ios-select" style="margin-bottom: 8px;">
+                            ${Object.keys(suppliersList).map(s => `<option value="${s}" ${s === order.supplier ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                        <textarea id="edit-comment" class="ios-textarea" rows="2" placeholder="Комментарий">${escapeHtml(order.comment || '')}</textarea>
+                        <div id="edit-products"></div>
+                        <div style="margin-top: 16px; display: flex; gap: 8px;">
+                            <button id="save-edit-btn" class="ios-button ios-button-primary" style="flex:1;">💾 Сохранить</button>
+                            <button id="cancel-edit-btn" class="ios-button" style="flex:1; background: rgba(255,255,255,0.2);">Отмена</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const modal = document.getElementById('modal');
+            modal.innerHTML = modalHtml;
+            modal.style.display = 'flex';
+
+            const productsData = await fetch(`${API_URL}/get_products?supplier=${encodeURIComponent(order.supplier)}`, {
+                headers: { 'X-Telegram-InitData': tg.initData || '' }
+            }).then(r => r.json());
+
+            const productsContainer = document.getElementById('edit-products');
+            if (productsData.categories) {
+                for (const [cat, items] of Object.entries(productsData.categories)) {
+                    items.forEach(product => {
+                        const qty = order.items[product.name]?.quantity || 0;
+                        productsContainer.innerHTML += `
+                            <div class="product-item">
+                                <span>${product.name} (${product.unit})</span>
+                                <input type="number" class="quantity-input" data-product="${product.name}" data-unit="${product.unit}" value="${qty}" step="${product.unit === 'кг' ? 0.1 : 1}">
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            document.getElementById('save-edit-btn').onclick = async () => {
+                const newShop = document.getElementById('edit-shop').value;
+                const newSupplier = document.getElementById('edit-supplier').value;
+                const newComment = document.getElementById('edit-comment').value;
+                const newItems = {};
+                document.querySelectorAll('#edit-products .quantity-input').forEach(input => {
+                    const val = parseFloat(input.value);
+                    if (val > 0) {
+                        newItems[input.dataset.product] = { quantity: val, unit: input.dataset.unit };
+                    }
+                });
+
+                const response = await fetch(`${API_URL}/update_order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                    body: JSON.stringify({ order_id: orderId, shop: newShop, supplier: newSupplier, comment: newComment, items: newItems, attachments: order.attachments || [] })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('✅ Заявка обновлена');
+                    modal.style.display = 'none';
+                    loadOrders();
+                    loadAdminOrders();
+                } else {
+                    showMessage(result.error || 'Ошибка', true);
+                }
+            };
+            document.getElementById('cancel-edit-btn').onclick = () => { modal.style.display = 'none'; };
+        }
+
+        async function deleteOrder(orderId) {
+            showConfirm('Подтверждение', `Удалить заявку #${orderId}?`, async () => {
+                try {
+                    const response = await fetch(`${API_URL}/delete_order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                        body: JSON.stringify({ order_id: orderId })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage('✅ Заявка удалена');
+                        loadOrders();
+                        loadAdminOrders();
+                    }
+                    else { showMessage(result.error || 'Ошибка', true); }
+                } catch (error) { showMessage('Ошибка соединения', true); }
+            });
+        }
+
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch(`${API_URL}/get_data`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const data = await response.json();
+                isAdminFlag = data.is_admin;
+                if (isAdminFlag) document.querySelector('.admin-tab').style.display = 'block';
+                return isAdminFlag;
+            } catch (error) { return false; }
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            const statusNames = { 'completed': 'Выполнена', 'cancelled': 'Отменена' };
+            showConfirm('Подтверждение', `Изменить статус заявки #${orderId} на "${statusNames[newStatus]}"?`, async () => {
+                try {
+                    const response = await fetch(`${API_URL}/update_order_status`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                        body: JSON.stringify({ order_id: orderId, status: newStatus })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage(`✅ Статус изменен`);
+                        loadOrders();
+                        loadAdminOrders();
+                    }
+                    else { showMessage(result.error || 'Ошибка', true); }
+                } catch (error) { showMessage('Ошибка соединения', true); }
+            });
+        }
+
+        async function uploadAttachment(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64 = e.target.result;
+                    try {
+                        const response = await fetch(`${API_URL}/upload_attachment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                            body: JSON.stringify({ file_data: base64, file_name: file.name, file_type: file.type })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            resolve(result.attachment);
+                        } else {
+                            resolve(null);
+                        }
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                const attachment = await uploadAttachment(file);
+                if (attachment) {
+                    attachmentsList.push(attachment);
+                }
+            }
+            renderAttachmentsPreview();
+        }
+
+        function renderAttachmentsPreview() {
+            const container = document.getElementById('attachments-preview');
+            if (!container) return;
+            container.innerHTML = attachmentsList.map(att => `
+                <div class="attachment-item">
+                    <a href="${att.url}" target="_blank">📎 ${att.name}</a>
+                    <button onclick="removeAttachment('${att.id}')" style="background:none; border:none; color:red; margin-left:5px;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        window.removeAttachment = (id) => {
+            attachmentsList = attachmentsList.filter(a => a.id !== id);
+            renderAttachmentsPreview();
+        };
+
+        async function createOrder() {
+            if (isCreatingOrder) {
+                showMessage('⏳ Подождите, заявка уже создается...');
+                return;
+            }
+            if (!currentShop || !currentSupplier) {
+                showMessage('Выберите магазин и поставщика', true);
+                return;
+            }
+
+            const comment = document.getElementById('order-comment').value.trim();
+            const hasItems = Object.keys(currentCart).length > 0;
+            if (!hasItems && !comment && attachmentsList.length === 0) {
+                showMessage('Укажите комментарий, товары или прикрепите файл', true);
+                return;
+            }
+
+            const orderData = {
+                shop: currentShop,
+                supplier: currentSupplier,
+                items: currentCart,
+                comment: comment,
+                is_empty: !hasItems && attachmentsList.length === 0,
+                attachments: attachmentsList
+            };
+
+            showConfirm('Подтверждение',
+                hasItems ? `Создать заявку для ${currentShop} от ${currentSupplier}?` : `Создать заявку-уведомление?`,
+                async () => {
+                    isCreatingOrder = true;
+
+                    const createBtn = document.getElementById('create-btn');
+                    const originalText = createBtn.textContent;
+                    createBtn.textContent = '⏳ Создание...';
+                    createBtn.disabled = true;
+
+                    try {
+                        const response = await fetch(`${API_URL}/create_order`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                            body: JSON.stringify(orderData)
+                        });
+                        const result = await response.json();
+
+                        if (result.success) {
+                            showMessage(`✅ Заявка #${result.order_id} успешно создана!`);
+                            launchConfetti();
+
+                            // Очищаем форму
+                            currentCart = {};
+                            attachmentsList = [];
+
+                            const productsContainer = document.getElementById('products-list');
+                            if (productsContainer) {
+                                const inputs = productsContainer.querySelectorAll('.quantity-input');
+                                inputs.forEach(input => { input.value = '0'; });
+                            }
+
+                            const commentField = document.getElementById('order-comment');
+                            if (commentField) commentField.value = '';
+
+                            const attachmentsPreview = document.getElementById('attachments-preview');
+                            if (attachmentsPreview) attachmentsPreview.innerHTML = '';
+
+                            const shopSelect = document.getElementById('shop-select');
+                            const supplierSelect = document.getElementById('supplier-select');
+
+                            if (shopSelect) shopSelect.value = '';
+                            if (supplierSelect) supplierSelect.value = '';
+
+                            const supplierCard = document.getElementById('supplier-card');
+                            const productsCard = document.getElementById('products-card');
+
+                            if (supplierCard) supplierCard.style.display = 'none';
+                            if (productsCard) productsCard.style.display = 'none';
+
+                            currentShop = null;
+                            currentSupplier = null;
+
+                            // Переключаемся на вкладку заявок
+                            const ordersTab = document.querySelector('.tab[data-tab="orders"]');
+                            if (ordersTab) {
+                                ordersTab.click();
+                            }
+
+                            // Обновляем списки заявок
+                            setTimeout(async () => {
+                                await loadOrders();
+                                await loadAdminOrders();
+                            }, 500);
+
+                        } else {
+                            showMessage(result.error || 'Ошибка при создании заявки', true);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        showMessage('Проблема с соединением. Попробуйте позже.', true);
+                    } finally {
+                        isCreatingOrder = false;
+                        createBtn.textContent = originalText;
+                        createBtn.disabled = false;
+                    }
+                }
+            );
+        }
+
+        function renderProductsWithCategories(productsData) {
+            const container = document.getElementById('products-list');
+            container.innerHTML = '';
+            currentCart = {};
+
+            if (!productsData) {
+                container.innerHTML = '<div class="empty-state">Нет товаров</div>';
+                updateCreateButton();
+                return;
+            }
+
+            if (productsData.categories) {
+                const categories = productsData.categories;
+                if (Object.keys(categories).length === 0) {
+                    container.innerHTML = '<div class="empty-state">Нет товаров</div>';
+                    updateCreateButton();
+                    return;
+                }
+
+                for (const [categoryName, items] of Object.entries(categories)) {
+                    if (!items || items.length === 0) continue;
+
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'product-category';
+
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'category-header';
+                    headerDiv.innerHTML = `<span>📁 ${escapeHtml(categoryName)}</span><span class="category-toggle">▼</span>`;
+
+                    const itemsContainer = document.createElement('div');
+                    itemsContainer.className = 'category-items';
+                    itemsContainer.style.display = 'block';
+
+                    items.forEach(product => {
+                        const name = product.name;
+                        const unit = product.unit || 'шт';
+                        let step = (unit === 'кг' || unit === 'кег' || unit === 'бут' || unit === 'кейс') ? 0.1 : 1;
+
+                        const productDiv = document.createElement('div');
+                        productDiv.className = 'product-item';
+                        productDiv.style.marginLeft = '8px';
+                        productDiv.style.marginBottom = '8px';
+                        productDiv.innerHTML = `
+                            <span class="product-name">${escapeHtml(name)} <span class="product-unit">${unit}</span></span>
+                            <input type="number" class="quantity-input" data-product="${escapeHtml(name)}" data-unit="${unit}" min="0" step="${step}" value="0">
+                        `;
+                        const input = productDiv.querySelector('.quantity-input');
+                        input.onchange = () => {
+                            const qty = parseFloat(input.value);
+                            if (qty > 0) {
+                                currentCart[name] = { quantity: qty, unit: unit };
+                            } else {
+                                delete currentCart[name];
+                            }
+                            updateCreateButton();
+                        };
+                        itemsContainer.appendChild(productDiv);
+                    });
+
+                    let isOpen = true;
+                    headerDiv.onclick = () => {
+                        isOpen = !isOpen;
+                        itemsContainer.style.display = isOpen ? 'block' : 'none';
+                        const toggle = headerDiv.querySelector('.category-toggle');
+                        toggle.textContent = isOpen ? '▼' : '▶';
+                    };
+
+                    categoryDiv.appendChild(headerDiv);
+                    categoryDiv.appendChild(itemsContainer);
+                    container.appendChild(categoryDiv);
+                }
+            } else if (Array.isArray(productsData)) {
+                productsData.forEach(product => {
+                    const name = product.name;
+                    const unit = product.unit || 'шт';
+                    let step = (unit === 'кг' || unit === 'кег' || unit === 'бут' || unit === 'кейс') ? 0.1 : 1;
+                    const div = document.createElement('div');
+                    div.className = 'product-item';
+                    div.innerHTML = `
+                        <span class="product-name">${escapeHtml(name)} <span class="product-unit">${unit}</span></span>
+                        <input type="number" class="quantity-input" data-product="${escapeHtml(name)}" data-unit="${unit}" min="0" step="${step}" value="0">
+                    `;
+                    const input = div.querySelector('.quantity-input');
+                    input.onchange = () => {
+                        const qty = parseFloat(input.value);
+                        if (qty > 0) {
+                            currentCart[name] = { quantity: qty, unit: unit };
+                        } else {
+                            delete currentCart[name];
+                        }
+                        updateCreateButton();
+                    };
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = '<div class="empty-state">Нет товаров</div>';
+            }
+            updateCreateButton();
+        }
+
+        async function loadProductsList(supplier) {
+            const response = await fetch(`${API_URL}/get_products?supplier=${encodeURIComponent(supplier)}`, {
+                headers: { 'X-Telegram-InitData': tg.initData || '' }
+            });
+            return await response.json();
+        }
+
+        async function loadAdminOrders() {
+            const container = document.getElementById('admin-orders-list');
+            if (!container) return;
+
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/get_orders`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                let allOrders = await response.json();
+
+                const uniqueOrders = [];
+                const seenIds = new Set();
+                for (const order of allOrders) {
+                    if (!seenIds.has(order.id)) {
+                        seenIds.add(order.id);
+                        uniqueOrders.push(order);
+                    }
+                }
+
+                if (uniqueOrders.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Нет заявок</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                uniqueOrders.slice().reverse().forEach(order => {
+                    const statusText = { 'new': 'Новая', 'completed': 'Выполнена', 'cancelled': 'Отменена' }[order.status] || 'Новая';
+                    const statusClass = { 'new': 'status-new', 'completed': 'status-completed', 'cancelled': 'status-cancelled' }[order.status];
+
+                    let attachmentsHtml = '';
+                    if (order.attachments && order.attachments.length > 0) {
+                        attachmentsHtml = '<div style="margin-top: 8px;">📎 Файлы: ' + order.attachments.map(a => `<a href="${a.url}" target="_blank" style="color:white;">${a.name}</a>`).join(', ') + '</div>';
+                    }
+
+                    let productsHtml = '';
+                    if (Object.keys(order.items).length > 0) {
+                        for (const [product, data] of Object.entries(order.items)) {
+                            const qty = data.quantity;
+                            const unit = data.unit || 'шт';
+                            productsHtml += `<div class="order-product"><span>${escapeHtml(product)}</span><span>${Number.isInteger(qty) ? qty : qty.toFixed(1)} ${unit}</span></div>`;
+                        }
+                    } else {
+                        productsHtml = '<div class="order-product" style="color: rgba(255,255,255,0.5);">📭 Нет товаров</div>';
+                    }
+
+                    let commentHtml = order.comment ? `<div class="order-comment">💬 ${escapeHtml(order.comment)}</div>` : '';
+                    let authorHtml = order.user_name ? `<div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 4px;">👤 ${escapeHtml(order.user_name)}</div>` : '';
+
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'order-item';
+                    orderDiv.innerHTML = `
+                        <div class="order-actions">
+                            <button class="copy-btn" data-order='${JSON.stringify(order).replace(/'/g, "\\'")}'>📋</button>
+                            <button class="edit-order-btn" data-order-id="${order.id}">✏️</button>
+                            <button class="delete-order-btn" data-order-id="${order.id}">🗑️</button>
+                        </div>
+                        <div class="order-header">
+                            <div>
+                                <div class="order-shop">🏪 ${escapeHtml(order.shop)}</div>
+                                <div class="order-supplier">📦 ${escapeHtml(order.supplier)}</div>
+                                <div class="order-date">📅 ${order.date || ''} ${order.time || ''}</div>
+                                ${authorHtml}
+                            </div>
+                            <div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        ${commentHtml}
+                        ${attachmentsHtml}
+                        <div class="order-products">${productsHtml}</div>
+                        <div class="status-buttons">
+                            ${order.status === 'new' ? `<button class="status-btn status-btn-completed" onclick="updateOrderStatus(${order.id}, 'completed')">Выполнить</button><button class="status-btn status-btn-cancelled" onclick="updateOrderStatus(${order.id}, 'cancelled')">Отменить</button>` :
+                              order.status === 'completed' ? '<div style="padding: 6px; background: rgba(40,167,69,0.2); border-radius: 10px; text-align: center;">✅ Заявка выполнена</div>' :
+                              '<div style="padding: 6px; background: rgba(220,53,69,0.2); border-radius: 10px; text-align: center;">❌ Заявка отменена</div>'}
+                        </div>
+                    `;
+
+                    const copyBtn = orderDiv.querySelector('.copy-btn');
+                    if (copyBtn) {
+                        try { const orderData = JSON.parse(copyBtn.dataset.order.replace(/\\'/g, "'")); copyBtn.onclick = (e) => { e.stopPropagation(); copyOrderToClipboard(orderData); }; } catch(e) {}
+                    }
+
+                    const editBtn = orderDiv.querySelector('.edit-order-btn');
+                    if (editBtn) {
+                        editBtn.onclick = () => editOrder(order.id);
+                    }
+
+                    const deleteBtn = orderDiv.querySelector('.delete-order-btn');
+                    if (deleteBtn) {
+                        deleteBtn.onclick = () => deleteOrder(order.id);
+                    }
+
+                    container.appendChild(orderDiv);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки заявок в админке:', error);
+                container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
+        async function loadOrders() {
+            if (isLoadingOrders) return;
+            isLoadingOrders = true;
+
+            const ordersTabActive = document.getElementById('orders-tab').classList.contains('active');
+            if (!ordersTabActive) {
+                isLoadingOrders = false;
+                return;
+            }
+
+            showSkeletonOrders();
+
+            try {
+                const response = await fetch(`${API_URL}/get_orders`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                let allOrders = await response.json();
+
+                const uniqueOrders = [];
+                const seenIds = new Set();
+                for (const order of allOrders) {
+                    if (!seenIds.has(order.id)) {
+                        seenIds.add(order.id);
+                        uniqueOrders.push(order);
+                    }
+                }
+
+                let filteredOrders = currentStatusFilter === 'all' ? uniqueOrders : uniqueOrders.filter(o => o.status === currentStatusFilter);
+                filteredOrders = filteredOrders.filter(o => isDateInRange(o.date, currentDateFilter, currentDateFrom, currentDateTo));
+                if (currentShopFilter !== 'all') filteredOrders = filteredOrders.filter(o => o.shop === currentShopFilter);
+                if (currentSupplierFilter !== 'all') filteredOrders = filteredOrders.filter(o => o.supplier === currentSupplierFilter);
+
+                const container = document.getElementById('orders-list');
+                const noOrders = document.getElementById('no-orders');
+
+                if (!filteredOrders || filteredOrders.length === 0) {
+                    container.innerHTML = '';
+                    noOrders.style.display = 'block';
+                    return;
+                }
+
+                noOrders.style.display = 'none';
+                container.innerHTML = '';
+                const isAdmin = await checkAdminStatus();
+
+                filteredOrders.slice().reverse().forEach(order => {
+                    const statusText = { 'new': 'Новая', 'completed': 'Выполнена', 'cancelled': 'Отменена' }[order.status] || 'Новая';
+                    const statusClass = { 'new': 'status-new', 'completed': 'status-completed', 'cancelled': 'status-cancelled' }[order.status];
+
+                    let attachmentsHtml = '';
+                    if (order.attachments && order.attachments.length > 0) {
+                        attachmentsHtml = '<div style="margin-top: 8px;">📎 Файлы: ' + order.attachments.map(a => `<a href="${a.url}" target="_blank" style="color:white;">${a.name}</a>`).join(', ') + '</div>';
+                    }
+
+                    let productsHtml = '';
+                    if (Object.keys(order.items).length > 0) {
+                        for (const [product, data] of Object.entries(order.items)) {
+                            const qty = data.quantity;
+                            const unit = data.unit || 'шт';
+                            productsHtml += `<div class="order-product"><span>${escapeHtml(product)}</span><span>${Number.isInteger(qty) ? qty : qty.toFixed(1)} ${unit}</span></div>`;
+                        }
+                    } else {
+                        productsHtml = '<div class="order-product" style="color: rgba(255,255,255,0.5);">📭 Нет товаров</div>';
+                    }
+
+                    let commentHtml = order.comment ? `<div class="order-comment">💬 ${escapeHtml(order.comment)}</div>` : '';
+                    let authorHtml = order.user_name ? `<div style="font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 4px;">👤 ${escapeHtml(order.user_name)}</div>` : '';
+
+                    let statusButtonsHtml = '';
+                    if (isAdmin && order.status === 'new') {
+                        statusButtonsHtml = `<div class="status-buttons"><button class="status-btn status-btn-completed" onclick="updateOrderStatus(${order.id}, 'completed')">Выполнить</button><button class="status-btn status-btn-cancelled" onclick="updateOrderStatus(${order.id}, 'cancelled')">Отменить</button></div>`;
+                    } else if (isAdmin && order.status === 'completed') {
+                        statusButtonsHtml = `<div style="margin-top: 10px; padding: 6px; background: rgba(40,167,69,0.2); border-radius: 10px; text-align: center; color: rgba(255,255,255,0.8);">✅ Заявка выполнена</div>`;
+                    } else if (isAdmin && order.status === 'cancelled') {
+                        statusButtonsHtml = `<div style="margin-top: 10px; padding: 6px; background: rgba(220,53,69,0.2); border-radius: 10px; text-align: center; color: rgba(255,255,255,0.8);">❌ Заявка отменена</div>`;
+                    }
+
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'order-item';
+                    orderDiv.innerHTML = `
+                        <div class="order-actions">
+                            <button class="copy-btn" data-order='${JSON.stringify(order).replace(/'/g, "\\'")}'>📋</button>
+                        </div>
+                        <div class="order-header">
+                            <div>
+                                <div class="order-shop">🏪 ${escapeHtml(order.shop)}</div>
+                                <div class="order-supplier">📦 ${escapeHtml(order.supplier)}</div>
+                                <div class="order-date">📅 ${order.date || ''} ${order.time || ''}</div>
+                                ${authorHtml}
+                            </div>
+                            <div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        ${commentHtml}
+                        ${attachmentsHtml}
+                        <div class="order-products">${productsHtml}</div>
+                        ${statusButtonsHtml}
+                    `;
+
+                    const copyBtn = orderDiv.querySelector('.copy-btn');
+                    if (copyBtn) {
+                        try { const orderData = JSON.parse(copyBtn.dataset.order.replace(/\\'/g, "'")); copyBtn.onclick = (e) => { e.stopPropagation(); copyOrderToClipboard(orderData); }; } catch(e) {}
+                    }
+
+                    container.appendChild(orderDiv);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки заявок:', error);
+            } finally {
+                isLoadingOrders = false;
+            }
+        }
+
+        let shopsData = {};
+        let suppliersData = {};
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/get_data`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const data = await response.json();
+                shopsData = data.shops || {};
+                suppliersData = data.suppliers || {};
+                isAdminFlag = data.is_admin;
+                if (isAdminFlag) document.querySelector('.admin-tab').style.display = 'block';
+
+                const shops = Object.keys(shopsData);
+                const shopSelect = document.getElementById('shop-select');
+                const scheduleShopSelect = document.getElementById('schedule-shop-select');
+                const scheduleShop = document.getElementById('schedule-shop');
+
+                if (shopSelect) {
+                    shopSelect.innerHTML = '<option value="">Выберите магазин</option>';
+                    shops.sort().forEach(shop => { shopSelect.innerHTML += `<option value="${shop}">${shop}</option>`; });
+                }
+                if (scheduleShopSelect) {
+                    scheduleShopSelect.innerHTML = '<option value="">Выберите магазин</option>';
+                    shops.sort().forEach(shop => { scheduleShopSelect.innerHTML += `<option value="${shop}">${shop}</option>`; });
+                }
+                if (scheduleShop) {
+                    scheduleShop.innerHTML = '<option value="">Выберите магазин</option>';
+                    shops.sort().forEach(shop => { scheduleShop.innerHTML += `<option value="${shop}">${shop}</option>`; });
+                }
+
+                const shopFilterModal = document.getElementById('shop-filter-modal');
+                const supplierFilterModal = document.getElementById('supplier-filter-modal');
+                if (shopFilterModal) {
+                    shopFilterModal.innerHTML = '<option value="all">Все магазины</option>';
+                    shops.forEach(shop => { shopFilterModal.innerHTML += `<option value="${shop}">🏪 ${shop}</option>`; });
+                }
+                if (supplierFilterModal) {
+                    const suppliers = Object.keys(suppliersData).sort();
+                    supplierFilterModal.innerHTML = '<option value="all">Все поставщики</option>';
+                    suppliers.forEach(supplier => { supplierFilterModal.innerHTML += `<option value="${supplier}">📦 ${supplier}</option>`; });
+                }
+
+                return data;
+            } catch (error) {
+                showMessage('Ошибка загрузки данных', true);
+            }
+        }
+
+        async function loadSuppliers(shop) {
+            const response = await fetch(`${API_URL}/get_available_suppliers?shop=${encodeURIComponent(shop)}`, {
+                headers: { 'X-Telegram-InitData': tg.initData || '' }
+            });
+            return await response.json();
+        }
+
+        function updateCreateButton() {
+            const createBtn = document.getElementById('create-btn');
+            const comment = document.getElementById('order-comment').value.trim();
+            const hasItems = Object.keys(currentCart).length > 0;
+            createBtn.disabled = !((hasItems || comment.length > 0 || attachmentsList.length > 0) && currentShop && currentSupplier);
+        }
+
+        async function loadSchedule() {
+            const shop = document.getElementById('schedule-shop-select').value;
+            const container = document.getElementById('schedule-container');
+            const noSchedule = document.getElementById('no-schedule');
+
+            if (!shop) {
+                container.innerHTML = '';
+                noSchedule.style.display = 'block';
+                return;
+            }
+
+            noSchedule.style.display = 'none';
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/get_schedule?shop=${encodeURIComponent(shop)}`, {
+                    headers: { 'X-Telegram-InitData': tg.initData || '' }
+                });
+                const scheduleData = await response.json();
+
+                if (!scheduleData || Object.keys(scheduleData).length === 0) {
+                    container.innerHTML = '<div class="empty-state">Нет расписания</div>';
+                    return;
+                }
+
+                let tableHtml = '<table class="schedule-table">';
+                tableHtml += '<thead>';
+                tableHtml += '';
+                tableHtml += '<th>📦 Поставщик</th>';
+                for (let i = 0; i < DAYS_OF_WEEK_SHORT.length; i++) {
+                    tableHtml += `<th>${DAYS_OF_WEEK_SHORT[i]}</th>`;
+                }
+                tableHtml += '</tr>';
+                tableHtml += '</thead>';
+                tableHtml += '<tbody>';
+
+                for (const supplier of Object.keys(scheduleData).sort()) {
+                    const days = scheduleData[supplier] || [];
+                    tableHtml += '<tr>';
+                    tableHtml += `<td title="${escapeHtml(supplier)}">📦 ${escapeHtml(supplier)}</td>`;
+                    for (let i = 0; i < DAYS_OF_WEEK_FULL.length; i++) {
+                        const isAvailable = days.includes(DAYS_OF_WEEK_FULL[i]);
+                        tableHtml += `<td class="${isAvailable ? 'day-available' : 'day-unavailable'}">${isAvailable ? '✅' : '❌'}</td>`;
+                    }
+                    tableHtml += '</tr>';
+                }
+                tableHtml += '</tbody>';
+                tableHtml += '</table>';
+
+                container.innerHTML = tableHtml;
+            } catch (error) {
+                console.error('Ошибка загрузки графика:', error);
+                container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
+        async function loadScheduleForEdit() {
+            const shop = document.getElementById('schedule-shop').value;
+            const supplier = document.getElementById('schedule-supplier').value;
+            const container = document.getElementById('days-selector');
+
+            if (!shop || !supplier) {
+                container.innerHTML = '<div class="empty-state">Выберите магазин и поставщика</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/get_schedule_for_shop?shop=${encodeURIComponent(shop)}&supplier=${encodeURIComponent(supplier)}`, {
+                    headers: { 'X-Telegram-InitData': tg.initData || '' }
+                });
+                const data = await response.json();
+                selectedDays = data.days || [];
+
+                container.innerHTML = '<div class="day-selector"></div>';
+                const daysContainer = container.querySelector('.day-selector');
+
+                for (let i = 0; i < DAYS_OF_WEEK_FULL.length; i++) {
+                    const day = DAYS_OF_WEEK_FULL[i];
+                    const short = DAYS_OF_WEEK_SHORT[i];
+                    const isSelected = selectedDays.includes(day);
+
+                    const btn = document.createElement('button');
+                    btn.textContent = `${short} - ${day}`;
+                    btn.className = 'day-btn' + (isSelected ? ' selected' : '');
+                    btn.style.padding = '10px 14px';
+                    btn.style.margin = '4px';
+                    btn.style.background = isSelected ? 'rgba(0, 122, 255, 0.8)' : 'rgba(255, 255, 255, 0.15)';
+                    btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                    btn.style.borderRadius = '30px';
+                    btn.style.cursor = 'pointer';
+                    btn.style.color = 'white';
+                    btn.style.fontSize = '12px';
+
+                    btn.onclick = () => {
+                        if (selectedDays.includes(day)) {
+                            selectedDays = selectedDays.filter(d => d !== day);
+                            btn.style.background = 'rgba(255, 255, 255, 0.15)';
+                            btn.classList.remove('selected');
+                        } else {
+                            selectedDays.push(day);
+                            btn.style.background = 'rgba(0, 122, 255, 0.8)';
+                            btn.classList.add('selected');
+                        }
+                    };
+                    daysContainer.appendChild(btn);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки дней:', error);
+                container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
+        async function saveSchedule() {
+            const shop = document.getElementById('schedule-shop').value;
+            const supplier = document.getElementById('schedule-supplier').value;
+
+            if (!shop || !supplier) {
+                showMessage('Выберите магазин и поставщика', true);
+                return;
+            }
+
+            if (!selectedDays || selectedDays.length === 0) {
+                showMessage('Выберите хотя бы один день', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/save_schedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Telegram-InitData': tg.initData || ''
+                    },
+                    body: JSON.stringify({ shop, supplier, days: selectedDays })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(`✅ Расписание сохранено!\n\n${shop} → ${supplier}\nДни: ${selectedDays.join(', ')}`);
+                    if (document.getElementById('schedule-shop-select').value === shop) {
+                        loadSchedule();
+                    }
+                } else {
+                    showMessage(result.error || 'Ошибка сохранения', true);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showMessage('Ошибка соединения', true);
+            }
+        }
+
+        async function loadAdminData() {
+            try {
+                const suppliersRes = await fetch(`${API_URL}/get_suppliers`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const suppliersData = await suppliersRes.json();
+                const suppliersList = document.getElementById('suppliers-list');
+                const productSupplierSelect = document.getElementById('product-supplier-select');
+                const scheduleSupplier = document.getElementById('schedule-supplier');
+
+                if (productSupplierSelect) {
+                    productSupplierSelect.innerHTML = '<option value="">Выберите поставщика</option>';
+                    for (const s of Object.keys(suppliersData).sort()) {
+                        productSupplierSelect.innerHTML += `<option value="${s}">📦 ${s}</option>`;
+                    }
+                }
+                if (scheduleSupplier) {
+                    scheduleSupplier.innerHTML = '<option value="">Выберите поставщика</option>';
+                    for (const s of Object.keys(suppliersData).sort()) {
+                        scheduleSupplier.innerHTML += `<option value="${s}">📦 ${s}</option>`;
+                    }
+                }
+                if (suppliersList) {
+                    suppliersList.innerHTML = '';
+                    for (const name of Object.keys(suppliersData).sort()) {
+                        suppliersList.innerHTML += `<div class="list-item"><span>📦 ${escapeHtml(name)}</span><button class="delete-btn" data-supplier="${name}">🗑️</button></div>`;
+                    }
+                    document.querySelectorAll('.delete-btn[data-supplier]').forEach(btn => {
+                        btn.onclick = () => deleteSupplier(btn.dataset.supplier);
+                    });
+                }
+
+                const productsRes = await fetch(`${API_URL}/get_all_products`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const allProducts = await productsRes.json();
+                const productsAdminList = document.getElementById('products-admin-list');
+                if (productsAdminList) {
+                    productsAdminList.innerHTML = '';
+                    for (const [supplier, data] of Object.entries(allProducts)) {
+                        productsAdminList.innerHTML += `<div style="font-weight: 600; margin-top: 16px;">📦 ${escapeHtml(supplier)}</div>`;
+                        if (data.categories) {
+                            for (const [category, items] of Object.entries(data.categories)) {
+                                if (items && items.length > 0) {
+                                    productsAdminList.innerHTML += `<div style="margin-left: 12px; margin-top: 8px; color: rgba(255,255,255,0.7);">📁 ${escapeHtml(category)}</div>`;
+                                    for (const p of items) {
+                                        productsAdminList.innerHTML += `<div class="list-item" style="margin-left: 24px;"><span>• ${escapeHtml(p.name)} (${p.unit || 'шт'})</span><button class="delete-product-btn" data-supplier="${supplier}" data-product="${p.name}">🗑️</button></div>`;
+                                    }
+                                }
+                            }
+                        } else if (Array.isArray(data)) {
+                            for (const p of data) {
+                                productsAdminList.innerHTML += `<div class="list-item"><span>• ${escapeHtml(p.name)} (${p.unit || 'шт'})</span><button class="delete-product-btn" data-supplier="${supplier}" data-product="${p.name}">🗑️</button></div>`;
+                            }
+                        }
+                    }
+                    document.querySelectorAll('.delete-product-btn').forEach(btn => {
+                        btn.onclick = () => deleteProduct(btn.dataset.supplier, btn.dataset.product);
+                    });
+                }
+
+                const shopsRes = await fetch(`${API_URL}/get_shops`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const shopsData = await shopsRes.json();
+                const shopsList = document.getElementById('shops-list');
+                if (shopsList) {
+                    shopsList.innerHTML = '';
+                    for (const name of Object.keys(shopsData).sort()) {
+                        shopsList.innerHTML += `<div class="list-item"><span>🏪 ${escapeHtml(name)}</span><button class="delete-shop-btn" data-shop="${name}">🗑️</button></div>`;
+                    }
+                    document.querySelectorAll('.delete-shop-btn').forEach(btn => {
+                        btn.onclick = () => deleteShop(btn.dataset.shop);
+                    });
+                }
+
+                await loadAdminsList();
+            } catch (error) { console.error('Ошибка загрузки админ данных:', error); }
+        }
+
+        async function loadAdminsList() {
+            try {
+                const response = await fetch(`${API_URL}/get_admins`, { headers: { 'X-Telegram-InitData': tg.initData || '' } });
+                const data = await response.json();
+                const container = document.getElementById('admins-list');
+                if (!container) return;
+                if (!data.admins || data.admins.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Нет администраторов</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.admins.forEach(adminId => {
+                    const isCurrentUser = (adminId == user?.id);
+                    const div = document.createElement('div');
+                    div.className = 'list-item';
+                    div.innerHTML = `<div><span>👤 <code>${adminId}</code></span>${isCurrentUser ? '<span style="background: rgba(40,167,69,0.8); padding: 2px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px;">Вы</span>' : ''}</div>${!isCurrentUser ? `<button class="delete-admin-btn" data-id="${adminId}">🗑️</button>` : '<span style="color: rgba(255,255,255,0.5);">Нельзя удалить себя</span>'}`;
+                    container.appendChild(div);
+                });
+                document.querySelectorAll('.delete-admin-btn').forEach(btn => {
+                    btn.onclick = () => removeAdmin(parseInt(btn.dataset.id));
+                });
+            } catch (error) { console.error('Ошибка загрузки админов:', error); }
+        }
+
+        async function addAdmin() {
+            const adminId = document.getElementById('new-admin-id').value.trim();
+            if (!adminId) { showMessage('Введите Telegram ID', true); return; }
+            const id = parseInt(adminId);
+            if (isNaN(id)) { showMessage('ID должен быть числом', true); return; }
+            showConfirm('Подтверждение', `Добавить пользователя с ID ${id} в список администраторов?`, async () => {
+                try {
+                    const response = await fetch(`${API_URL}/add_admin`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                        body: JSON.stringify({ admin_id: id })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage(`✅ Администратор ${id} добавлен`);
+                        document.getElementById('new-admin-id').value = '';
+                        loadAdminsList();
+                    } else {
+                        showMessage(result.error || 'Ошибка', true);
+                    }
+                } catch (error) {
+                    showMessage('Ошибка соединения', true);
+                }
+            });
+        }
+
+        async function removeAdmin(adminId) {
+            showConfirm('Подтверждение', `Удалить администратора ${adminId}?`, async () => {
+                try {
+                    const response = await fetch(`${API_URL}/remove_admin`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                        body: JSON.stringify({ admin_id: adminId })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage(`✅ Администратор ${adminId} удален`);
+                        loadAdminsList();
+                    } else {
+                        showMessage(result.error || 'Ошибка', true);
+                    }
+                } catch (error) {
+                    showMessage('Ошибка соединения', true);
+                }
+            });
+        }
+
+        async function deleteSupplier(name) {
+            if (!confirm(`Удалить поставщика "${name}"?`)) return;
+            const response = await fetch(`${API_URL}/delete_supplier`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ name })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Поставщик "${name}" удален`);
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        async function deleteProduct(supplier, productName) {
+            if (!confirm(`Удалить товар "${productName}"?`)) return;
+            const response = await fetch(`${API_URL}/delete_product`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ supplier, product_name: productName })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Товар "${productName}" удален`);
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        async function deleteShop(name) {
+            if (!confirm(`Удалить магазин "${name}"?`)) return;
+            const response = await fetch(`${API_URL}/delete_shop`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ name })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Магазин "${name}" удален`);
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        async function addSupplier() {
+            const name = document.getElementById('new-supplier').value.trim();
+            if (!name) { showMessage('Введите название', true); return; }
+            const response = await fetch(`${API_URL}/add_supplier`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ name })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Поставщик "${name}" добавлен`);
+                document.getElementById('new-supplier').value = '';
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        async function addProduct() {
+            const supplier = document.getElementById('product-supplier-select').value;
+            const name = document.getElementById('product-name').value.trim();
+            const unit = document.getElementById('product-unit').value;
+            if (!supplier) { showMessage('Выберите поставщика', true); return; }
+            if (!name) { showMessage('Введите название', true); return; }
+            const validUnits = ['шт', 'кг', 'кег', 'кейс', 'бут'];
+            if (!validUnits.includes(unit)) { showMessage('Неверная единица', true); return; }
+
+            const response = await fetch(`${API_URL}/add_product`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ supplier, category: 'Общие', name, unit })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Товар "${name} (${unit})" добавлен`);
+                document.getElementById('product-name').value = '';
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        async function addShop() {
+            const name = document.getElementById('new-shop').value.trim();
+            if (!name) { showMessage('Введите название', true); return; }
+            const response = await fetch(`${API_URL}/add_shop`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Telegram-InitData': tg.initData || '' },
+                body: JSON.stringify({ name })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showMessage(`✅ Магазин "${name}" добавлен`);
+                document.getElementById('new-shop').value = '';
+                loadAdminData();
+                loadData();
+            } else {
+                showMessage(result.error || 'Ошибка', true);
+            }
+        }
+
+        function formatDateForFilter(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('.');
+            if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            return dateStr;
+        }
+
+        function isDateInRange(orderDate, filter, dateFrom, dateTo) {
+            if (filter === 'all') return true;
+            const today = new Date();
+            const orderDateObj = new Date(formatDateForFilter(orderDate));
+            if (filter === 'today') return orderDateObj.toDateString() === today.toDateString();
+            if (filter === 'yesterday') {
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                return orderDateObj.toDateString() === yesterday.toDateString();
+            }
+            if (filter === 'week') {
+                const weekAgo = new Date(today);
+                weekAgo.setDate(today.getDate() - 7);
+                return orderDateObj >= weekAgo;
+            }
+            if (filter === 'custom' && dateFrom && dateTo) {
+                const from = new Date(dateFrom);
+                const to = new Date(dateTo);
+                to.setHours(23, 59, 59);
+                return orderDateObj >= from && orderDateObj <= to;
+            }
+            return true;
+        }
+
+        let tempStatusFilter = 'all', tempDateFilter = 'all', tempShopFilter = 'all', tempSupplierFilter = 'all', tempDateFrom = '', tempDateTo = '';
+
+        function openFiltersModal() {
+            const modal = document.getElementById('filters-modal');
+            if (modal) {
+                tempStatusFilter = currentStatusFilter;
+                tempDateFilter = currentDateFilter;
+                tempShopFilter = currentShopFilter;
+                tempSupplierFilter = currentSupplierFilter;
+                tempDateFrom = currentDateFrom;
+                tempDateTo = currentDateTo;
+                updateModalFiltersUI();
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeFiltersModal() {
+            const modal = document.getElementById('filters-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function updateModalFiltersUI() {
+            document.querySelectorAll('.filter-btn-modal').forEach(btn => {
+                if (btn.dataset.status === tempStatusFilter) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            document.querySelectorAll('.filter-date-btn').forEach(btn => {
+                if (btn.dataset.date === tempDateFilter) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            const dateRangeContainer = document.getElementById('date-range-container');
+            if (dateRangeContainer) {
+                dateRangeContainer.style.display = tempDateFilter === 'custom' ? 'block' : 'none';
+            }
+            const dateFromInput = document.getElementById('date-from');
+            const dateToInput = document.getElementById('date-to');
+            if (dateFromInput) dateFromInput.value = tempDateFrom;
+            if (dateToInput) dateToInput.value = tempDateTo;
+
+            const shopSelect = document.getElementById('shop-filter-modal');
+            if (shopSelect) shopSelect.value = tempShopFilter;
+            const supplierSelect = document.getElementById('supplier-filter-modal');
+            if (supplierSelect) supplierSelect.value = tempSupplierFilter;
+        }
+
+        function applyFilters() {
+            currentStatusFilter = tempStatusFilter;
+            currentDateFilter = tempDateFilter;
+            currentShopFilter = tempShopFilter;
+            currentSupplierFilter = tempSupplierFilter;
+            currentDateFrom = tempDateFrom;
+            currentDateTo = tempDateTo;
+            updateActiveFiltersPreview();
+            closeFiltersModal();
+            loadOrders();
+        }
+
+        function resetFilters() {
+            tempStatusFilter = 'all';
+            tempDateFilter = 'all';
+            tempShopFilter = 'all';
+            tempSupplierFilter = 'all';
+            tempDateFrom = '';
+            tempDateTo = '';
+            updateModalFiltersUI();
+        }
+
+        function updateActiveFiltersPreview() {
+            const preview = document.getElementById('active-filters-preview');
+            const countSpan = document.getElementById('active-filters-count');
+            if (!preview) return;
+            let activeCount = 0;
+            let previewText = [];
+            if (currentStatusFilter !== 'all') {
+                activeCount++;
+                previewText.push({ 'new': 'Новые', 'completed': 'Выполнены', 'cancelled': 'Отменены' }[currentStatusFilter]);
+            }
+            if (currentDateFilter !== 'all') {
+                activeCount++;
+                if (currentDateFilter === 'custom' && currentDateFrom && currentDateTo) {
+                    previewText.push(`📅 ${currentDateFrom} → ${currentDateTo}`);
+                } else {
+                    const dateNames = { 'today': 'Сегодня', 'yesterday': 'Вчера', 'week': 'Неделя' };
+                    previewText.push(`📅 ${dateNames[currentDateFilter] || currentDateFilter}`);
+                }
+            }
+            if (currentShopFilter !== 'all') {
+                activeCount++;
+                previewText.push(`🏪 ${currentShopFilter.length > 12 ? currentShopFilter.slice(0, 10) + '…' : currentShopFilter}`);
+            }
+            if (currentSupplierFilter !== 'all') {
+                activeCount++;
+                previewText.push(`📦 ${currentSupplierFilter.length > 12 ? currentSupplierFilter.slice(0, 10) + '…' : currentSupplierFilter}`);
+            }
+            if (activeCount > 0) {
+                preview.innerHTML = previewText.join(' · ');
+                countSpan.style.display = 'inline-block';
+                countSpan.innerHTML = activeCount;
+            } else {
+                preview.innerHTML = '';
+                countSpan.style.display = 'none';
+            }
+        }
+
+        // Обработчики событий
+        document.getElementById('shop-select').onchange = async (e) => {
+            currentShop = e.target.value;
+            const supplierCard = document.getElementById('supplier-card');
+            const productsCard = document.getElementById('products-card');
+            const noSuppliers = document.getElementById('no-suppliers');
+            const supplierSelect = document.getElementById('supplier-select');
+
+            if (!currentShop) {
+                supplierCard.style.display = 'none';
+                productsCard.style.display = 'none';
+                return;
+            }
+
+            supplierCard.style.display = 'block';
+            supplierSelect.innerHTML = '<option value="">Загрузка...</option>';
+            supplierSelect.disabled = true;
+
+            const suppliers = await loadSuppliers(currentShop);
+            if (!suppliers || suppliers.length === 0) {
+                noSuppliers.style.display = 'block';
+                supplierCard.style.display = 'none';
+                productsCard.style.display = 'none';
+                return;
+            }
+
+            noSuppliers.style.display = 'none';
+            supplierSelect.innerHTML = '<option value="">Выберите поставщика</option>';
+            suppliers.forEach(s => {
+                supplierSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+            supplierSelect.disabled = false;
+        };
+
+        document.getElementById('supplier-select').onchange = async (e) => {
+            currentSupplier = e.target.value;
+            const productsCard = document.getElementById('products-card');
+            if (!currentSupplier) {
+                productsCard.style.display = 'none';
+                return;
+            }
+            productsCard.style.display = 'block';
+            const productsData = await loadProductsList(currentSupplier);
+            renderProductsWithCategories(productsData);
+        };
+
+        document.getElementById('order-comment').oninput = updateCreateButton;
+        document.getElementById('create-btn').onclick = createOrder;
+        document.getElementById('schedule-shop-select').onchange = loadSchedule;
+
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) fileInput.onchange = handleFileSelect;
+
+        if (document.getElementById('add-supplier-btn')) document.getElementById('add-supplier-btn').onclick = addSupplier;
+        if (document.getElementById('add-product-btn')) document.getElementById('add-product-btn').onclick = addProduct;
+        if (document.getElementById('add-shop-btn')) document.getElementById('add-shop-btn').onclick = addShop;
+        if (document.getElementById('add-admin-btn')) document.getElementById('add-admin-btn').onclick = addAdmin;
+
+        const scheduleShopSelect = document.getElementById('schedule-shop');
+        const scheduleSupplierSelect = document.getElementById('schedule-supplier');
+
+        if (scheduleShopSelect) scheduleShopSelect.onchange = loadScheduleForEdit;
+        if (scheduleSupplierSelect) scheduleSupplierSelect.onchange = loadScheduleForEdit;
+        if (document.getElementById('save-schedule-btn')) document.getElementById('save-schedule-btn').onclick = saveSchedule;
+
+        const refreshOrdersAdmin = document.getElementById('refresh-orders-admin');
+        if (refreshOrdersAdmin) {
+            refreshOrdersAdmin.onclick = () => loadAdminOrders();
+        }
+
+        const openFiltersBtn = document.getElementById('open-filters-btn');
+        const closeFiltersBtn = document.getElementById('close-filters-btn');
+        const applyFiltersBtn = document.getElementById('apply-filters-btn');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
+        if (openFiltersBtn) openFiltersBtn.onclick = openFiltersModal;
+        if (closeFiltersBtn) closeFiltersBtn.onclick = closeFiltersModal;
+        if (applyFiltersBtn) applyFiltersBtn.onclick = applyFilters;
+        if (resetFiltersBtn) resetFiltersBtn.onclick = resetFilters;
+
+        document.querySelectorAll('.filter-btn-modal').forEach(btn => {
+            btn.onclick = () => { tempStatusFilter = btn.dataset.status; updateModalFiltersUI(); };
+        });
+        document.querySelectorAll('.filter-date-btn').forEach(btn => {
+            btn.onclick = () => {
+                tempDateFilter = btn.dataset.date;
+                if (tempDateFilter !== 'custom') {
+                    tempDateFrom = '';
+                    tempDateTo = '';
+                }
+                updateModalFiltersUI();
+            };
+        });
+        const dateFromInput = document.getElementById('date-from');
+        const dateToInput = document.getElementById('date-to');
+        if (dateFromInput) dateFromInput.onchange = () => { tempDateFrom = dateFromInput.value; };
+        if (dateToInput) dateToInput.onchange = () => { tempDateTo = dateToInput.value; };
+
+        const shopFilterModal = document.getElementById('shop-filter-modal');
+        if (shopFilterModal) shopFilterModal.onchange = () => { tempShopFilter = shopFilterModal.value; };
+        const supplierFilterModal = document.getElementById('supplier-filter-modal');
+        if (supplierFilterModal) supplierFilterModal.onchange = () => { tempSupplierFilter = supplierFilterModal.value; };
+
+        const filtersModal = document.getElementById('filters-modal');
+        if (filtersModal) filtersModal.onclick = (e) => { if (e.target === filtersModal) closeFiltersModal(); };
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.onclick = () => setTheme(btn.dataset.theme);
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.onclick = () => {
+                const tabName = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+                if (tabName === 'orders') loadOrders();
+                if (tabName === 'schedule' && document.getElementById('schedule-shop-select').value) loadSchedule();
+                if (tabName === 'admin' && isAdminFlag) loadAdminData();
+            };
+        });
+
+        document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+            btn.onclick = () => {
+                const section = btn.dataset.adminSection;
+                document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`admin-${section}`).classList.add('active');
+                if (section === 'admins') loadAdminsList();
+                if (section === 'orders') loadAdminOrders();
+            };
+        });
+
+        loadData();
+        loadOrders();
+        updateActiveFiltersPreview();
+    </script>
+</body>
+</html>

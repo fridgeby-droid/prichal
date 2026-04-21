@@ -1,0 +1,366 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #000000);
+    overflow-x: hidden;
+}
+
+.app {
+    min-height: 100vh;
+    padding-bottom: 20px;
+}
+
+/* ========== HEADER ========== */
+.header {
+    background: linear-gradient(135deg, var(--tg-theme-button-color, #007aff) 0%, var(--tg-theme-button-color, #0051d5) 100%);
+    padding: 32px 20px 24px;
+    border-radius: 0 0 28px 28px;
+    position: relative;
+}
+
+.header-content h1 {
+    font-size: 34px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 400;
+}
+
+.user-chip {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+}
+
+/* ========== TAB BAR (iOS стиль) ========== */
+.tab-bar {
+    display: flex;
+    background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    margin: 16px 16px 0;
+    border-radius: 16px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-icon {
+    font-size: 22px;
+    margin-bottom: 4px;
+}
+
+.tab-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+.tab-item.active {
+    background: var(--tg-theme-bg-color, #ffffff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tab-item.active .tab-label {
+    color: var(--tg-theme-button-color, #007aff);
+}
+
+/* ========== CONTENT ========== */
+.content {
+    padding: 20px 16px;
+}
+
+/* ========== CARDS ========== */
+.card {
+    background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.card-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--tg-theme-text-color, #000000);
+}
+
+/* ========== SELECT (iOS стиль) ========== */
+.ios-select {
+    width: 100%;
+    padding: 16px;
+    background: var(--tg-theme-bg-color, #ffffff);
+    border: 1px solid var(--tg-theme-hint-color, #e5e5ea);
+    border-radius: 14px;
+    font-size: 17px;
+    font-family: inherit;
+    color: var(--tg-theme-text-color, #000000);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 20px;
+}
+
+.ios-select:focus {
+    outline: none;
+    border-color: var(--tg-theme-button-color, #007aff);
+}
+
+.ios-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ========== PRODUCTS LIST ========== */
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.product-item {
+    background: var(--tg-theme-bg-color, #ffffff);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.product-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.product-unit {
+    font-size: 13px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+    margin-left: 6px;
+}
+
+.product-quantity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    padding: 6px 12px;
+    border-radius: 30px;
+}
+
+.quantity-input {
+    width: 70px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 0;
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.quantity-input:focus {
+    outline: none;
+}
+
+.quantity-unit {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+/* ========== BUTTONS (iOS стиль) ========== */
+.ios-button {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+
+.ios-button-primary {
+    background: var(--tg-theme-button-color, #007aff);
+    color: var(--tg-theme-button-text-color, #ffffff);
+}
+
+.ios-button-primary:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* ========== ORDER ITEMS ========== */
+.order-item {
+    background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #e5e5ea);
+}
+
+.order-shop {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.order-supplier {
+    font-size: 14px;
+    color: var(--tg-theme-button-color, #007aff);
+    font-weight: 500;
+}
+
+.order-date {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+.order-items {
+    margin-top: 8px;
+}
+
+.order-item-product {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.order-item-name {
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.order-item-qty {
+    color: var(--tg-theme-hint-color, #8e8e93);
+    font-weight: 500;
+}
+
+/* ========== SCHEDULE ========== */
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.schedule-item {
+    background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.schedule-supplier {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--tg-theme-text-color, #000000);
+}
+
+.schedule-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.day-badge {
+    background: var(--tg-theme-bg-color, #ffffff);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tg-theme-button-color, #007aff);
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.empty-text {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--tg-theme-text-color, #000000);
+    margin-bottom: 8px;
+}
+
+.empty-hint {
+    font-size: 14px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+/* ========== LOADING ========== */
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+/* ========== ANIMATIONS ========== */
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
